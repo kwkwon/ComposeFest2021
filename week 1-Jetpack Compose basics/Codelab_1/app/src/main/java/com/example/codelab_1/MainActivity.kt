@@ -60,7 +60,7 @@ fun MessageCard(msg: Message) {
             if (isExpanded) MaterialTheme.colors.primary else MaterialTheme.colors.surface,
         )
 
-        Column(modifier = Modifier.clickable { isExpanded != isExpanded }) {
+        Column(modifier = Modifier.clickable { isExpanded = !isExpanded }) {
             Text(
                 text = msg.author,
                 color = MaterialTheme.colors.secondaryVariant,
@@ -79,6 +79,8 @@ fun MessageCard(msg: Message) {
                     style = MaterialTheme.typography.body2,
                     maxLines = if (isExpanded) Int.MAX_VALUE else 1,
                 )
+
+                print("kiwon, isExpanded = $isExpanded")
             }
         }
     }
