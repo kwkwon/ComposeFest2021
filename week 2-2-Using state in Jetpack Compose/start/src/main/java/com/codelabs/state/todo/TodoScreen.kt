@@ -145,24 +145,36 @@ fun TodoInputTextField(text: String, onTextChange: (String) -> Unit, modifier: M
 }
 
 @Composable
+fun Scaffold(
+    topBar: @Composable (() -> Unit)? = null,
+    bottomBar: @Composable (() -> Unit)? = null,
+    bodyContent: @Composable (PaddingValues) -> Unit
+) {
+}
+
+@Composable
 fun TodoItemEntryInput(onItemComplete: (TodoItem) -> Unit) {
-    val (text, setText) = remember { mutableStateOf("") }
-    val (icon, setIcon) = remember { mutableStateOf(TodoIcon.Default) }
-    val iconVisible = text.isNotBlank()
+    val (text, onTextChange) = remember { mutableStateOf("") }
+    val (icon, onIconChange) = remember { mutableStateOf(TodoIcon.Default) }
+
     val submit = {
-        onItemComplete(TodoItem(text, icon))
-        setIcon(TodoIcon.Default)
-        setText("")
+        if (text.isNotBlank()) {
+            onItemComplete(TodoItem(text, icon))
+            onTextChange("")
+            onIconChange(TodoIcon.Default)
+        }
     }
 
     TodoItemInput(
         text = text,
-        onTextChange = setText,
+        onTextChange = onTextChange,
         submit = submit,
-        iconVisible = iconVisible,
+        iconVisible = text.isNotBlank(),
         icon = icon,
-        onIconChange = setIcon
-    )
+        onIconChange = onIconChange
+    ) {
+        TodoEditButton(onClick = submit, text = "Add", enabled = text.isNotBlank())
+    }
 }
 
 @Composable
@@ -172,32 +184,32 @@ private fun TodoItemInput(
     submit: () -> Unit,
     iconVisible: Boolean,
     icon: TodoIcon,
-    onIconChange: (TodoIcon) -> Unit
+    onIconChange: (TodoIcon) -> Unit,
+    buttonSlot: @Composable () -> Unit
 ) {
-    Row(
-        Modifier
-            .padding(horizontal = 16.dp)
-            .padding(top = 16.dp)
-    ) {
-        TodoInputText(
-            text = text,
-            onTextChange = onTextChange,
-            modifier = Modifier
-                .weight(1f)
-                .padding(end = 8.dp),
-            onImeAction = submit
-        )
-        TodoEditButton(
-            onClick = submit,
-            text = "Add",
-            modifier = Modifier.align(Alignment.CenterVertically),
-            enabled = text.isNotBlank()
-        )
-    }
-    if (iconVisible) {
-        AnimatedIconRow(icon = icon, onIconChange = onIconChange, Modifier.padding(top = 8.dp))
-    } else {
-        Spacer(modifier = Modifier.height(16.dp))
+    Column() {
+        Row(
+            Modifier
+                .padding(horizontal = 16.dp)
+                .padding(top = 16.dp)
+        ) {
+            TodoInputText(
+                text = text,
+                onTextChange = onTextChange,
+                modifier = Modifier
+                    .weight(1f)
+                    .padding(end = 8.dp),
+                onImeAction = submit
+            )
+
+            Spacer(modifier = Modifier.width(8.dp))
+            Box(Modifier.align(Alignment.CenterVertically)) { buttonSlot() }
+        }
+        if (iconVisible) {
+            AnimatedIconRow(icon = icon, onIconChange = onIconChange, Modifier.padding(top = 8.dp))
+        } else {
+            Spacer(modifier = Modifier.height(16.dp))
+        }
     }
 }
 
@@ -213,7 +225,27 @@ fun TodoItemInlineEditor(
     submit = onEditDone,
     iconVisible = true,
     icon = item.icon,
-    onIconChange = { onEditItemChange(item.copy(icon = it)) }
+    onIconChange = { onEditItemChange(item.copy(icon = it)) },
+    buttonSlot = {
+        Row {
+            val shrinkButtons = Modifier.widthIn(20.dp)
+            TextButton(onClick = onEditDone, modifier = shrinkButtons) {
+                Text(
+                    text = "\uD83D\uDCBE",
+                    textAlign = TextAlign.End,
+                    modifier = Modifier.width(30.dp)
+                )
+                TextButton(onClick = onRemoveItem, modifier = shrinkButtons) {
+                    Text(
+                        text = "❌",
+                        textAlign = TextAlign.End,
+                        modifier = Modifier.width(30.dp)
+                    )
+                }
+
+            }
+        }
+    }
 )
 
 private fun randomTint(): Float {
